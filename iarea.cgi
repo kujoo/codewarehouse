@@ -42,7 +42,7 @@ use DateTime::Format::W3CDTF;
 
         # logging
         my $dt = DateTime->now(time_zone => 'Asia/Tokyo');
-        open my $fp, '>>', $config->{log}.'iarea.log';
+        open my $fp, '>>', $config->{work}.'iarea.log';
         print $fp $cgi->param('view')."\t".
             DateTime::Format::W3CDTF->format_datetime($dt)."\t".
             $cgi->param('LAT')."\t".
@@ -59,7 +59,7 @@ use DateTime::Format::W3CDTF;
 
         # logging
         my $dt = DateTime->now(time_zone => 'Asia/Tokyo');
-        open my $fp, '>>', $config->{log}.'iarea.log';
+        open my $fp, '>>', $config->{work}.'iarea.log';
         print $fp $cgi->param('view')."\t".
             DateTime::Format::W3CDTF->format_datetime($dt)."\t".
             $cgi->param('lat')."\t".
@@ -77,14 +77,14 @@ use DateTime::Format::W3CDTF;
     print $cgi->header(-type => 'text/html', -charset => 'utf-8');
     print <<EOD;
 <html><body>$dt<div align="center">
-@{[$gps ? qq() : qq(<form method="get" action="@{[$config->{testhost}]}/geo/iarea/iarea.cgi" lcs><input type="hidden" name="view" value="@{[$cgi->param('view')]}"><input type="hidden" name="AREACODE" value="@{[$cgi->param('AREACODE')]}"><input type="hidden" name="LAT" value="@{[$cgi->param('LAT')]}"><input type="hidden" name="LON" value="@{[$cgi->param('LON')]}"><input type="hidden" name="GEO" value="@{[$cgi->param('GEO')]}"><input type="hidden" name="XACC" value="@{[$cgi->param('XACC')]}"><input type="submit" name="ok" value="G P S"></form><hr>)]}
+@{[$gps ? qq() : qq(<form method="get" action="@{[$config->{testhost}]}/geo/iarea/iarea.cgi" lcs><input type="hidden" name="view" value="@{[$cgi->param('view')]}"><input type="hidden" name="AREACODE" value="@{[$cgi->param('AREACODE')]}"><input type="hidden" name="LAT" value="@{[$cgi->param('LAT')]}"><input type="hidden" name="LON" value="@{[$cgi->param('LON')]}"><input type="hidden" name="XACC" value="@{[$cgi->param('XACC')]}"><input type="submit" name="ok" value=" G P S "></form><hr>)]}
 <form method="post" action="http://w1m.docomo.ne.jp/cp/iarea">
 <input type="hidden" name="ecode" value="OPENAREACODE">
 <input type="hidden" name="msn" value="OPENAREAKEY">
 <input type="hidden" name="nl" value="@{[$config->{testhost}]}/geo/iarea/iarea.cgi">
 <input type="hidden" name="arg1" value="view=@{[$dt]}">
 <input type="hidden" name="posinfo" value="1">
-<input type="submit" name="ok" value="iArea Check">
+<input type="submit" name="ok" value=" iArea Check ">
 </form><hr></div>
 @{[$cgi->param('AREACODE') ? qq(Area&nbsp;@{[$cgi->param('AREACODE')]}<br>) : qq()]}
 @{[$cgi->param('LAT')      ? qq(LAT:&nbsp;@{[$cgi->param('LAT')]}<br>) : qq()]}
@@ -92,7 +92,6 @@ use DateTime::Format::W3CDTF;
 @{[$cgi->param('LON')      ? qq(LON:&nbsp;@{[$cgi->param('LON')]}<br>) : qq()]}
 @{[$cgi->param('lon')      ? qq(lon:&nbsp;@{[$cgi->param('lon')]}<br>) : qq()]}
 @{[$cgi->param('GEO')      ? qq(GEO:&nbsp;@{[$cgi->param('GEO')]}<br>) : qq()]}
-@{[$cgi->param('geo')      ? qq(geo:&nbsp;@{[$cgi->param('geo')]}<br>) : qq()]}
 @{[$cgi->param('XACC')     ? qq(ACC:&nbsp;@{[$cgi->param('XACC')]}<br>) : qq()]}
 @{[$cgi->param('x-acc')    ? qq(acc:&nbsp;@{[$cgi->param('x-acc')]}<br>) : qq()]}
 @{[$cgi->param('view')     ? qq(view&nbsp;@{[$cgi->param('view')]}<br>) : qq()]}
