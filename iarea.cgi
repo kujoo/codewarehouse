@@ -14,59 +14,88 @@ use DateTime::Format::W3CDTF;
 
     my $cgi = CGI->new();
     my $config = pit_get("personal.server");
-    my $last;
+    my $gps = 1;
 
-    if($cgi->param('AREACODE') or $cgi->param('POSINFO')) {
+    if($cgi->param('POSINFO')) {
 
-        my $tab = $cgi->param('AREACODE')."\t".$cgi->param('LAT')."\t".$cgi->param('LON')."\t".$cgi->param('GEO')."\t".$cgi->param('XACC')."\t".$cgi->param('POSINFO');
+        $gps = 0;
+
+        my $sub = $cgi->param('AREACODE').'|'.$cgi->param('LAT').'|'.$cgi->param('LON');
         my $msg =
-            'Area: '.$cgi->param('AREACODE')."\n".
             ' Lat: '.$cgi->param('LAT')."\n".
             ' Lon: '.$cgi->param('LON')."\n".
             ' Geo: '.$cgi->param('GEO')."\n".
             ' Acc: '.$cgi->param('XACC')."\n".
-            'info: '.$cgi->param('POSINFO')."\n\n".
-            $cgi->param('view')."\n\n";
-        my $sub = $cgi->param('AREACODE').'|'.$cgi->param('LAT').'|'.$cgi->param('LON');
+            'Area: '.$cgi->param('AREACODE')."\n".
+            'info: '.$cgi->param('POSINFO');
 
-        $last = $tab; # $sub."\n".$msg
+        # mail-send
         $sub = Encode::encode("MIME-Header-ISO_2022_JP", $sub);
-        $msg = Encode::encode("iso-2022-jp", $msg.$tab);
-
+        $msg = Encode::encode("iso-2022-jp", $msg."\n\n".$cgi->param('view'));
         my $mail = MIME::Lite->new(
             From    => $config->{twsendmail},
             To      => $config->{docomomail},
             Subject => $sub,
             Data    => $msg,
         );
-        $mail->send("sendmail", "/usr/sbin/sendmail -t -oi -oem");
+#       $mail->send("sendmail", "/usr/sbin/sendmail -t -oi -oem");
 
+        # logging
+        my $dt = DateTime->now(time_zone => 'Asia/Tokyo');
+        open my $fp, '>>', $config->{log}.'iarea.log';
+        print $fp $cgi->param('view')."\t".
+            DateTime::Format::W3CDTF->format_datetime($dt)."\t".
+            $cgi->param('LAT')."\t".
+            $cgi->param('LON')."\t".
+            $cgi->param('GEO')."\t".
+            $cgi->param('XACC')."\t".
+            $cgi->param('AREACODE')."\t".
+            $cgi->param('POSINFO')."\n";
+        close $fp;
 
-        {
-            my $dt = DateTime->now(time_zone => 'Asia/Tokyo');
-            open my $fp, '>>', $config->{log}.'iarea.log';
-            print $fp DateTime::Format::W3CDTF->format_datetime($dt)."\t".$tab."\t".$cgi->param('view')."\n";
-            close $fp;
-        }
+    } elsif($cgi->param('view')) {
+
+        $gps = 1;
+
+        # logging
+        my $dt = DateTime->now(time_zone => 'Asia/Tokyo');
+        open my $fp, '>>', $config->{log}.'iarea.log';
+        print $fp $cgi->param('view')."\t".
+            DateTime::Format::W3CDTF->format_datetime($dt)."\t".
+            $cgi->param('lat')."\t".
+            $cgi->param('lon')."\t".
+            $cgi->param('geo')."\t".
+            $cgi->param('x-acc')."\n";
+        close $fp;
 
     }
 
-    unless($last) { $last = 'none'; }
+
     my $dt = DateTime->now(time_zone => 'Asia/Tokyo');
     $dt = DateTime::Format::W3CDTF->format_datetime($dt);
 
     print $cgi->header(-type => 'text/html', -charset => 'utf-8');
     print <<EOD;
-<html><body>$dt
-<div align="center"><form method="post" action="http://w1m.docomo.ne.jp/cp/iarea">
+<html><body>$dt<div align="center">
+@{[$gps ? qq() : qq(<form method="get" action="@{[$config->{testhost}]}/geo/iarea/iarea.cgi" lcs><input type="hidden" name="view" value="@{[$cgi->param('view')]}"><input type="hidden" name="AREACODE" value="@{[$cgi->param('AREACODE')]}"><input type="hidden" name="LAT" value="@{[$cgi->param('LAT')]}"><input type="hidden" name="LON" value="@{[$cgi->param('LON')]}"><input type="hidden" name="GEO" value="@{[$cgi->param('GEO')]}"><input type="hidden" name="XACC" value="@{[$cgi->param('XACC')]}"><input type="submit" name="ok" value="G P S"></form><hr>)]}
+<form method="post" action="http://w1m.docomo.ne.jp/cp/iarea">
 <input type="hidden" name="ecode" value="OPENAREACODE">
 <input type="hidden" name="msn" value="OPENAREAKEY">
-<input type="hidden" name="nl" value="$config->{testhost}/geo/iarea/iarea.cgi">
-<input type="hidden" name="arg1" value="view=$dt">
+<input type="hidden" name="nl" value="@{[$config->{testhost}]}/geo/iarea/iarea.cgi">
+<input type="hidden" name="arg1" value="view=@{[$dt]}">
 <input type="hidden" name="posinfo" value="1">
 <input type="submit" name="ok" value="iArea Check">
-</form></div><hr>
-$last
+</form><hr></div>
+@{[$cgi->param('AREACODE') ? qq(Area&nbsp;@{[$cgi->param('AREACODE')]}<br>) : qq()]}
+@{[$cgi->param('LAT')      ? qq(LAT:&nbsp;@{[$cgi->param('LAT')]}<br>) : qq()]}
+@{[$cgi->param('lat')      ? qq(lat:&nbsp;@{[$cgi->param('lat')]}<br>) : qq()]}
+@{[$cgi->param('LON')      ? qq(LON:&nbsp;@{[$cgi->param('LON')]}<br>) : qq()]}
+@{[$cgi->param('lon')      ? qq(lon:&nbsp;@{[$cgi->param('lon')]}<br>) : qq()]}
+@{[$cgi->param('GEO')      ? qq(GEO:&nbsp;@{[$cgi->param('GEO')]}<br>) : qq()]}
+@{[$cgi->param('geo')      ? qq(geo:&nbsp;@{[$cgi->param('geo')]}<br>) : qq()]}
+@{[$cgi->param('XACC')     ? qq(ACC:&nbsp;@{[$cgi->param('XACC')]}<br>) : qq()]}
+@{[$cgi->param('x-acc')    ? qq(acc:&nbsp;@{[$cgi->param('x-acc')]}<br>) : qq()]}
+@{[$cgi->param('view')     ? qq(view&nbsp;@{[$cgi->param('view')]}<br>) : qq()]}
 </body></html>
 EOD
 
