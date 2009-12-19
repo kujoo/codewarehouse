@@ -11,8 +11,10 @@ use MIME::Lite;
 use DateTime;
 use DateTime::Format::HTTP;
 use DateTime::Format::W3CDTF;
+use LWP::UserAgent;
 
     my $cgi = CGI->new();
+
     my $config = pit_get("personal.server");
     my $gps = 1;
 
@@ -95,6 +97,36 @@ use DateTime::Format::W3CDTF;
 @{[$cgi->param('XACC')     ? qq(ACC:&nbsp;@{[$cgi->param('XACC')]}<br>) : qq()]}
 @{[$cgi->param('x-acc')    ? qq(acc:&nbsp;@{[$cgi->param('x-acc')]}<br>) : qq()]}
 @{[$cgi->param('view')     ? qq(view&nbsp;@{[$cgi->param('view')]}<br>) : qq()]}
-</body></html>
 EOD
+
+    if($cgi->param('AREACODE')) {
+        my @color = ('blue', 'green', 'yellow', 'red');
+
+        my($ilat, $ilon) = &geochangetime2hundred($cgi->param('LAT'), $cgi->param('LON'));
+        my $iarea = $ilat.','.$ilon.','.@color[0].'i';
+
+        my($glat, $glon, $gps) = ('', '', '');
+        if($cgi->param('lat')) {
+            ($glat, $glon) = &geochangetime2hundred($cgi->param('lat'), $cgi->param('lon'));
+            $gps = '|'.$glat.','.$glon.','.@color[$cgi->param('x-acc')].'g';
+        } else {
+            $iarea .= '&zoom=16';
+        }
+
+        print '<img src="http://maps.google.com/staticmap?maptype=mobile&size=240x240'.
+            '&markers='.$iarea.$gps.'&format=gif">';
+    }
+
+    print '</body></html>';
+
+    exit;
+
+sub geochangetime2hundred {
+    my($lat, $lon) = @_;
+    my @lat = split(/\./, $lat);
+    my @lon = split(/\./, $lon);
+    my $glat = @lat[0] + @lat[1] / 60 + (@lat[2] + @lat[3] / 1000) / 3600;
+    my $glon = @lon[0] + @lon[1] / 60 + (@lon[2] + @lon[3] / 1000) / 3600;
+    return $glat, $glon;
+}
 
