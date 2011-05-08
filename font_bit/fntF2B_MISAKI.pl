@@ -10,7 +10,7 @@ use GD;
 #use Config::Pit;
 
 	my $starttimes = time;
-	my $fontname = 'D:\_work\BOX\_sakura\mskfnt\MISAKI.TTF';
+	my $fontname = '/home/kur/local/work/codewarehouse/font_bit/MISAKI.TTF';
 #	my $fontname = 'C:\WINDOWS\Fonts\sazanami-gothic.ttf';
 	my $ptsize   = 6;
 	my @bg       = &str2rgb('ffffff');
